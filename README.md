@@ -3,8 +3,8 @@
 
 > ⚠️ **실행 전 필독**
 >
-> 이 프로젝트는 `node_modules` 폴더를 포함하지 않으므로, 다운로드 후 바로 실행되지 않을 수 있습니다.  
-> 반드시 아래의 **[6. 실행 방법](#6-실행-방법)** 을 먼저 읽고, `npm install` 후 `npm run dev` 순서로 실행해 주세요.
+> 이 프로젝트는 `node_modules` 폴더를 포함하지 않으므로, 소스코드로 실행하려면 반드시 아래의 **[6. 실행 방법](#6-실행-방법)** 을 먼저 읽고, `npm install` 후 `npm run dev` 순서로 실행해 주세요.  
+> 별도 설치 없이 실행하고 싶다면 **[Windows 포터블 실행 파일](#windows-포터블-실행-파일)** 을 다운로드하여 실행하면 됩니다.
 
 ---
 
@@ -494,6 +494,18 @@ npm run dev
 ```
 
 ---
+
+## Windows 포터블 실행 파일
+
+본 프로젝트는 Electron을 이용하여 Windows 포터블 실행 파일로도 패키징하였다.
+
+실행 파일은 용량이 커서 GitHub 저장소에는 포함하지 않았으며, 아래 Google Drive 링크를 통해 다운로드할 수 있다.
+
+- [MotorAnalyzer-0.0.0-Portable-x64.exe 다운로드](https://drive.google.com/file/d/1YFhHfVPhK1OlVtxhja7PmLTWTQW10Eow/view?usp=sharing)
+
+다운로드 후 파일을 실행하면 별도의 설치 없이 MotorAnalyzer 시뮬레이터를 사용할 수 있다.
+
+Windows 보안 경고가 표시될 경우, 개인 개발 앱이므로 `추가 정보 → 실행`을 선택하면 된다.
 
 ## 8. 사용 기술
 
