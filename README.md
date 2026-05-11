@@ -224,41 +224,232 @@ AI를 단순히 코드 생성에만 사용한 것이 아니라, 전기전자 이
 
 ## 6. 실행 방법
 
-본 프로젝트는 React + Vite 기반 웹 애플리케이션이다.
+본 프로젝트는 **React + Vite 기반 웹 애플리케이션**이다.  
+GitHub 저장소에는 용량이 큰 `node_modules` 폴더를 포함하지 않았다.
 
-GitHub 저장소에는 용량이 큰 `node_modules` 폴더를 포함하지 않았다.  
-`node_modules`는 실행에 필요한 외부 라이브러리들이 설치되는 폴더이며, `package.json`과 `package-lock.json`을 이용하여 동일하게 다시 설치할 수 있다.
+`node_modules`는 실행에 필요한 외부 라이브러리들이 설치되는 폴더이며, `package.json`과 `package-lock.json`을 이용하여 동일한 환경으로 다시 설치할 수 있다.
 
-처음 실행할 때는 프로젝트 폴더에서 아래 명령어를 실행한다.
+따라서 처음 실행하는 사용자는 아래 순서대로 진행하면 된다.
+
+---
+
+### 6.1 사전 준비
+
+이 프로젝트를 실행하려면 컴퓨터에 **Node.js**가 설치되어 있어야 한다.
+
+설치 여부는 터미널에서 아래 명령어로 확인할 수 있다.
+
+```bash
+node -v
+```
+
+```bash
+npm -v
+```
+
+버전 숫자가 출력되면 Node.js와 npm이 정상적으로 설치된 것이다.
+
+예시:
+
+```text
+v24.5.0
+11.12.1
+```
+
+만약 `node` 또는 `npm`이 인식되지 않는다면, Node.js LTS 버전을 설치한 뒤 다시 실행해야 한다.
+
+---
+
+### 6.2 GitHub에서 프로젝트 다운로드
+
+1. GitHub 저장소 페이지에 접속한다.
+
+```text
+https://github.com/Gnho-UOU/motor-analyzer
+```
+
+2. 오른쪽 위의 초록색 **Code** 버튼을 클릭한다.
+
+3. **Download ZIP**을 클릭하여 프로젝트 파일을 다운로드한다.
+
+4. 다운로드한 ZIP 파일의 압축을 해제한다.
+
+5. 압축을 해제하면 보통 다음과 같은 폴더가 생성된다.
+
+```text
+motor-analyzer-main
+```
+
+---
+
+### 6.3 VS Code에서 프로젝트 열기
+
+1. Visual Studio Code를 실행한다.
+
+2. 상단 메뉴에서 다음을 선택한다.
+
+```text
+File → Open Folder
+```
+
+3. 압축을 해제한 프로젝트 폴더를 선택한다.
+
+```text
+motor-analyzer-main
+```
+
+4. 폴더가 열리면 VS Code 왼쪽 파일 목록에 다음과 같은 파일들이 보여야 한다.
+
+```text
+src
+public
+package.json
+package-lock.json
+README.md
+vite.config.js
+```
+
+---
+
+### 6.4 터미널 열기
+
+VS Code 상단 메뉴에서 다음을 선택한다.
+
+```text
+Terminal → New Terminal
+```
+
+또는 단축키를 사용할 수 있다.
+
+```text
+Ctrl + `
+```
+
+터미널이 열리면 현재 위치가 프로젝트 폴더인지 확인한다.
+
+예시:
+
+```text
+PS C:\Users\사용자이름\Downloads\motor-analyzer-main>
+```
+
+만약 프로젝트 폴더가 아니라면 `cd` 명령어로 프로젝트 폴더로 이동한다.
+
+예시:
+
+```bash
+cd C:\Users\사용자이름\Downloads\motor-analyzer-main
+```
+
+---
+
+### 6.5 필요한 패키지 설치
+
+처음 실행할 때는 아래 명령어를 입력하여 필요한 라이브러리를 설치한다.
 
 ```bash
 npm install
 ```
 
-그다음 개발 서버를 실행한다.
+이 명령어를 실행하면 `package.json`과 `package-lock.json`에 기록된 정보를 바탕으로 필요한 패키지들이 자동으로 설치되고, `node_modules` 폴더가 생성된다.
+
+설치가 정상적으로 끝나면 다음과 비슷한 메시지가 출력된다.
+
+```text
+added packages
+found 0 vulnerabilities
+```
+
+---
+
+### 6.6 개발 서버 실행
+
+패키지 설치가 끝나면 아래 명령어를 입력한다.
 
 ```bash
 npm run dev
 ```
 
-실행 후 터미널에 표시되는 localhost 주소로 접속하면 된다.
+정상적으로 실행되면 터미널에 다음과 비슷한 주소가 표시된다.
 
-예시:
+```text
+VITE ready
+
+Local: http://localhost:5173/
+```
+
+브라우저에서 해당 주소로 접속하면 MotorAnalyzer 시뮬레이터를 실행할 수 있다.
 
 ```text
 http://localhost:5173/
 ```
 
-만약 5173 포트가 이미 사용 중이면 Vite가 자동으로 다른 포트를 안내한다.
+---
+
+### 6.7 포트 번호가 다른 경우
+
+만약 `5173` 포트가 이미 사용 중이면 Vite가 자동으로 다른 포트를 사용할 수 있다.
 
 예시:
+
+```text
+Port 5173 is in use, trying another one...
+
+Local: http://localhost:5174/
+```
+
+이 경우에는 `5173`이 아니라 터미널에 표시된 주소로 접속하면 된다.
 
 ```text
 http://localhost:5174/
 ```
 
-이 경우 터미널에 표시된 주소로 접속하면 된다.
+---
 
+### 6.8 실행 종료 방법
+
+시뮬레이터 실행을 종료하려면 VS Code 터미널에서 다음 키를 누른다.
+
+```text
+Ctrl + C
+```
+
+종료 여부를 묻는 메시지가 나오면 `Y`를 입력하고 Enter를 누른다.
+
+---
+
+### 6.9 이후 다시 실행하는 방법
+
+한 번 `npm install`을 실행한 뒤에는 매번 다시 설치할 필요가 없다.
+
+다음부터는 프로젝트 폴더에서 아래 명령어만 실행하면 된다.
+
+```bash
+npm run dev
+```
+
+단, `node_modules` 폴더를 삭제했거나 다른 컴퓨터에서 처음 실행하는 경우에는 다시 아래 명령어를 먼저 실행해야 한다.
+
+```bash
+npm install
+```
+
+---
+
+### 6.10 실행 명령어 요약
+
+처음 실행할 때:
+
+```bash
+npm install
+npm run dev
+```
+
+이후 다시 실행할 때:
+
+```bash
+npm run dev
+```
 ---
 
 ## 7. 설치 및 실행 명령어 요약
