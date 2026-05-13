@@ -1,4 +1,4 @@
-# MotorAnalyzer v0.5.16
+# MotorAnalyzer v0.6.2
 
 ## AI 코딩을 활용한 3상 유도전동기 운전점·기동·열 특성 시뮬레이터
 
@@ -11,7 +11,7 @@ React, Vite, Electron을 기반으로 개발하였으며, OpenAI ChatGPT와 Code
 > 별도 개발환경 없이 바로 실행하려면 [Windows 실행 파일 다운로드](#windows-download) 항목에서 `Setup` 또는 `Portable` 버전을 다운로드하면 됩니다.
 >
 > 실행 파일은 아래 Google Drive 폴더에서 다운로드할 수 있습니다.  
-> 👉 [MotorAnalyzer v0.5.16 실행 파일 다운로드 Google Drive](https://drive.google.com/drive/folders/1yzt-f9jhrkeS8aim-lhbI25Ehx1rGzDH?usp=sharing)
+> 👉 [MotorAnalyzer v0.6.2 실행 파일 다운로드 Google Drive](https://drive.google.com/drive/folders/1m0PrlrCSOjbqye2HZpqWzBDkOu09RBar?usp=sharing)
 >
 > `Portable` 버전은 설치 없이 바로 실행할 수 있지만, 오류 없이 더 안정적으로 사용하고 바로가기 생성, 앱 등록 등을 원한다면 [Setup 버전으로 설치하기 권장](#setup-install) 항목을 참고하여 `Setup` 버전으로 설치하는 것을 권장합니다.
 >
@@ -40,6 +40,8 @@ React, Vite, Electron을 기반으로 개발하였으며, OpenAI ChatGPT와 Code
 - 저전압, 과부하, 고슬립 운전
 - 권선 온도 상승 및 냉각 효과
 - 운전 상태 경고
+- Three.js 기반 고급 3D 전동기 모델
+- WebGL/GPU 가속 기반 3D 시각화
 - PDF 리포트 생성
 - Windows 실행 파일 패키징
 
@@ -271,21 +273,51 @@ START를 누르면 기동 시뮬레이션이 시작되며, STOP 또는 EMERGENCY
 - 슬립 표시
 - 전원 OFF 상태의 회전자계 비활성화
 
+v0.6.2에서는 단면 시각화에서도 실제 동기속도 `Ns`와 회전자속도 `Nr` 값을 같은 시각 배율로 반영하여, 회전자계와 회전자가 서로 다른 속도로 움직이는 모습을 더 자연스럽게 표현하도록 개선했습니다. 이를 통해 슬립이 단순 숫자 표시가 아니라, 회전자계와 회전자 사이의 상대적인 속도 차이로도 이해될 수 있도록 구성했습니다.
+
 ---
 
-### 3.9 3D 전동기 모델
+### 3.9 Three.js 기반 고급 3D 전동기 모델
 
-Dashboard에는 간단한 3D 스타일 전동기 모델이 포함되어 있습니다.
+v0.6.2에서는 기존의 단순한 3D 스타일 전동기 표현을 Three.js 기반 WebGL 3D 시각화로 교체했습니다. 이전 버전의 모델은 3D 느낌을 주는 교육용 시각화에 가까웠지만, 현재 버전에서는 실제 산업용 TEFC 유도전동기의 외형을 참고하여 더 알아보기 쉬운 3D 모델로 재구성했습니다.
 
-이를 통해 사용자는 전동기의 구조와 회전자 상태를 보다 직관적으로 확인할 수 있습니다.
+3D 모델에는 다음 요소를 포함했습니다.
 
-표시 요소는 다음과 같습니다.
+- 가로 원통형 전동기 하우징
+- 고정자 / Stator
+- 회전자 / Rotor
+- 회전축 / Shaft
+- 후면 냉각팬 / Cooling fan
+- 후면 팬 가드 및 그릴
+- 길이 방향 냉각핀
+- 전후 엔드실드
+- 상부 단자함
+- 케이블 글랜드
+- 베이스 풋 및 레일
+- 전면 축 및 커플링 회전 표시
+- 동기 회전자계 링
+- 회전자 속도 링
+- 전력 흐름 입자 효과
+- 권선온도 기반 열 glow
+- 경고 심각도 기반 위험 glow
+- 비상정지 상태 시 빨간 경고 효과
+- 부품 설명 라벨
 
-- 고정자
-- 회전자
-- 회전축
-- 회전자계 상태
-- 전원 ON/OFF 상태
+3D 모델은 기존 시뮬레이션 계산값을 받아 시각적으로 표현하는 구조입니다. 토크, 슬립, 속도, 열 상태, 경고 판정 등은 기존 계산 로직에서 수행하고, Three.js 모델은 해당 결과를 기반으로 회전, 색상, glow, 전력 흐름 효과를 표시합니다.
+
+팬, 회전자, 회전자 속도 링은 현재 표시되는 회전자 속도 `Nr` 값을 기준으로 회전합니다.
+
+```text
+omega = rpm × 2π / 60
+```
+
+동기 회전자계 링은 동기속도 `Ns` 기준으로 회전하며, 전원이 꺼졌거나 회전자계가 OFF인 상태에서는 흐려지거나 정지하도록 구성했습니다. 이를 통해 START 전 대기 상태에서는 3D 회전자와 팬이 불필요하게 회전하지 않고, STARTING, RUN, COASTING, EMERGENCY STOP 상태에서만 실제 상태에 맞게 움직이도록 수정했습니다.
+
+또한 전원 → 단자함 → 고정자 → 회전자 → 축 방향으로 흐르는 전력 흐름 효과를 추가하여, 전동기에 에너지가 전달되는 과정을 시각적으로 확인할 수 있도록 했습니다. 단, 이 효과는 실제 전력해석을 수행하는 기능이 아니라, 기존 계산 결과와 운전 상태를 이해하기 쉽게 보여주기 위한 시각적 표현입니다.
+
+그래픽 성능 측면에서는 Three.js의 WebGL 렌더링을 사용하여 3D 모델과 애니메이션이 GPU 가속을 활용할 수 있도록 구성했습니다. Electron 설정에서도 하드웨어 가속을 비활성화하지 않도록 수정하여, 기존 CPU 중심 시각화에서 발생하던 지연과 렉을 줄이고 전동기 3D 모델이 더 부드럽게 동작하도록 개선했습니다.
+
+> 전동기 토크 계산, 슬립 계산, 부하모델, 열 계산, 경고 판정 등 공학적 계산은 기존 JavaScript 계산 로직을 사용합니다. GPU 가속은 주로 Three.js/WebGL 기반 3D 그래픽 렌더링과 애니메이션 표현에 적용됩니다.
 
 ---
 
@@ -369,14 +401,18 @@ dT/dt = (Ploss - Qcool) / Cth
 Qcool = (T - Tambient) / Rth_effective
 ```
 
-또한 실제 전동기에는 팬과 프레임 방열이 존재하므로, 회전자 속도에 따라 냉각 효과가 달라지도록 구성했습니다.
+또한 실제 전동기에는 냉각팬과 프레임 방열이 존재하므로, 회전자 속도에 따라 냉각 효과가 달라지도록 구성했습니다.
 
 ```text
 speedRatio = rotorSpeed / ratedSpeed
 fanCoolingFactor = naturalCooling + forcedCooling × speedRatio^fanExponent
 ```
 
-이를 통해 정격 운전 중 권선온도가 계속 무한히 상승하지 않고, 손실과 냉각이 평형을 이루는 정상상태 온도에 접근하도록 구성했습니다.
+v0.6.2에서는 기존 열모델에서 권선온도가 허용 권선온도를 비현실적으로 크게 초과하면서 계속 상승하는 문제를 개선했습니다. 명판 정격출력과 효율을 이용해 정격 손실을 계산하고, 등가회로 손실 추정값이 비정상적으로 크게 튀는 경우에는 열모델에 명판 효율 기반의 연속 운전 손실 한계를 적용하도록 수정했습니다.
+
+또한 정격 연속 운전 시 허용 권선온도에 바로 붙지 않도록 유효 열저항을 보정하고, STARTING 상태와 RUN 상태의 열부하 적용 방식을 구분했습니다. STARTING 상태에서는 과도 손실을 더 크게 허용하고, RUN 상태에서는 팬 냉각이 반영된 연속 열부하 기준으로 계산하도록 구성했습니다.
+
+이를 통해 권선온도가 무한히 계속 상승하는 비현실적인 표현을 줄이고, 손실과 냉각의 균형에 따라 정상상태 온도에 접근하는 교육용 열 거동에 가깝게 수정했습니다.
 
 ---
 
@@ -437,12 +473,14 @@ MotorAnalyzer는 웹 브라우저에서 실행할 수 있을 뿐만 아니라, E
 생성 가능한 파일 예시는 다음과 같습니다.
 
 ```text
-MotorAnalyzer-0.5.16-Portable-x64.exe
-MotorAnalyzer-0.5.16-Setup-x64.exe
+MotorAnalyzer-0.6.2-Portable-x64.exe
+MotorAnalyzer-0.6.2-Setup-x64.exe
 ```
 
 - Portable 버전: 설치 없이 실행 가능
 - Setup 버전: Windows 프로그램처럼 설치 후 실행 가능
+
+v0.6.2에서는 Electron 환경에서도 Three.js/WebGL 기반 3D 모델이 하드웨어 가속을 사용할 수 있도록 GPU 비활성화 설정을 제거했습니다. 단, 실제 GPU 사용 여부는 사용자의 Windows 환경, 그래픽 드라이버, WebGL 지원 여부에 따라 달라질 수 있습니다.
 
 ---
 
@@ -569,7 +607,7 @@ motor-analyzer
 주요 폴더 설명:
 
 ```text
-src/components     UI 컴포넌트
+src/components     UI 컴포넌트 및 Three.js 3D 시각화 컴포넌트
 src/data           기본 파라미터, 모터 예시값, 선택 옵션
 src/hooks          시뮬레이션 상태 관리 Hook
 src/utils          계산식, 부하모델, 경고 로직, 리포트 유틸
@@ -597,13 +635,13 @@ Windows용 실행 파일은 용량이 커서 GitHub 소스코드 저장소에는
 
 아래 Google Drive 폴더에서 실행 파일을 다운로드할 수 있습니다.
 
-[MotorAnalyzer v0.5.16 실행 파일 다운로드 Google Drive](https://drive.google.com/drive/folders/1yzt-f9jhrkeS8aim-lhbI25Ehx1rGzDH?usp=sharing)
+[MotorAnalyzer v0.6.2 실행 파일 다운로드 Google Drive](https://drive.google.com/drive/folders/1m0PrlrCSOjbqye2HZpqWzBDkOu09RBar?usp=sharing)
 
 다운로드 폴더에는 다음과 같은 파일이 포함될 수 있습니다.
 
 ```text
-MotorAnalyzer-0.5.16-Portable-x64.exe
-MotorAnalyzer-0.5.16-Setup-x64.exe
+MotorAnalyzer-0.6.2-Portable-x64.exe
+MotorAnalyzer-0.6.2-Setup-x64.exe
 ```
 
 ---
@@ -614,7 +652,7 @@ MotorAnalyzer-0.5.16-Setup-x64.exe
 정확하고 안정적인 실행을 위해서는 `Setup` 버전 설치를 권장합니다.
 
 ```text
-MotorAnalyzer-0.5.16-Setup-x64.exe
+MotorAnalyzer-0.6.2-Setup-x64.exe
 ```
 
 Setup 버전은 Windows 프로그램처럼 설치되며, 다음과 같은 장점이 있습니다.
@@ -626,7 +664,7 @@ Setup 버전은 Windows 프로그램처럼 설치되며, 다음과 같은 장점
 
 설치 방법:
 
-1. Google Drive 폴더에서 `MotorAnalyzer-0.5.16-Setup-x64.exe` 다운로드
+1. Google Drive 폴더에서 `MotorAnalyzer-0.6.2-Setup-x64.exe` 다운로드
 2. 파일 실행
 3. 설치 마법사 안내에 따라 설치
 4. 설치 완료 후 MotorAnalyzer 실행
@@ -645,7 +683,7 @@ Windows 보안 경고가 표시될 경우, 개인 개발 앱이므로 다음 순
 설치 없이 바로 실행하고 싶다면 Portable 버전을 사용할 수 있습니다.
 
 ```text
-MotorAnalyzer-0.5.16-Portable-x64.exe
+MotorAnalyzer-0.6.2-Portable-x64.exe
 ```
 
 Portable 버전은 별도 설치 과정 없이 파일을 더블클릭하여 실행할 수 있습니다.
@@ -654,7 +692,7 @@ Portable 버전은 별도 설치 과정 없이 파일을 더블클릭하여 실�
 
 실행 방법:
 
-1. Google Drive 폴더에서 `MotorAnalyzer-0.5.16-Portable-x64.exe` 다운로드
+1. Google Drive 폴더에서 `MotorAnalyzer-0.6.2-Portable-x64.exe` 다운로드
 2. 원하는 폴더에 파일 저장
 3. 파일을 더블클릭하여 실행
 4. Windows 보안 경고가 표시되면 `추가 정보 → 실행` 선택
@@ -890,8 +928,8 @@ npm.cmd run dist
 
 ```text
 release
-├─ MotorAnalyzer-0.5.16-Portable-x64.exe
-├─ MotorAnalyzer-0.5.16-Setup-x64.exe
+├─ MotorAnalyzer-0.6.2-Portable-x64.exe
+├─ MotorAnalyzer-0.6.2-Setup-x64.exe
 └─ win-unpacked
 ```
 
@@ -970,7 +1008,11 @@ AI 활용 과정은 다음과 같습니다.
 13. 권선온도 및 냉각 모델 추가
 14. PDF 리포트 생성 기능 추가
 15. Electron 기반 Windows 실행 파일 생성
-16. 반복 테스트와 오류 수정
+16. Three.js 기반 3D 전동기 모델 고급화
+17. WebGL/GPU 가속 기반 3D 시각화 개선
+18. 권선온도 열모델의 냉각 및 정상상태 수렴 구조 개선
+19. 그래프, 파라미터, 효율 분석, 열 모델 탭 구조 정리
+20. 반복 테스트와 오류 수정
 
 AI는 단순 코드 생성 도구가 아니라, 개발 과정에서 문제 원인 분석, 코드 수정, 구조 개선, 문서 작성 보조 도구로 활용되었습니다.
 
@@ -994,8 +1036,10 @@ MotorAnalyzer는 교육용 시뮬레이터이며, 실제 산업용 전동기 해
 - 부하 관성
 - 실제 부하 토크-속도 특성
 - 인버터 및 소프트스타터 제어 알고리즘
+- 실제 전동기 3D 형상 치수 및 제조사별 상세 구조
+- WebGL/GPU 가속 지원 여부에 따른 그래픽 성능 차이
 
-따라서 본 프로그램의 결과는 학습, 발표, 보고서, 개념 검증 용도로 사용하는 것이 적절합니다.
+따라서 본 프로그램의 결과는 학습, 발표, 보고서, 개념 검증 용도로 사용하는 것이 적절합니다. 또한 Three.js 3D 모델은 실제 산업용 전동기의 외형을 참고한 교육용 시각화이며, 제조사 도면 수준의 정확한 기계 설계 모델은 아닙니다.
 
 ---
 
@@ -1007,6 +1051,10 @@ MotorAnalyzer는 교육용 시뮬레이터이며, 실제 산업용 전동기 해
 - Electron
 - Electron Builder
 - Recharts
+- Three.js
+- @react-three/fiber
+- @react-three/drei
+- WebGL
 - SVG
 - CSS
 - jsPDF
@@ -1019,7 +1067,7 @@ MotorAnalyzer는 교육용 시뮬레이터이며, 실제 산업용 전동기 해
 ## 11. 버전
 
 ```text
-Current Version: v0.5.16
+Current Version: v0.6.2
 ```
 
 주요 변경 사항:
@@ -1031,6 +1079,17 @@ Current Version: v0.5.16
 - 정격부하 운전과 기동 해석 분리
 - Thevenin 등가회로 기반 토크 계산
 - 토크-속도 그래프 마커 개선
-- 권선온도 및 냉각 모델 추가
-- PDF 리포트 생성 기능 추가
-- Electron Windows EXE 배포 지원git
+- Three.js 기반 고급 3D 전동기 모델 적용
+- 산업용 TEFC 전동기 형태를 참고한 하우징, 냉각핀, 팬, 단자함, 베이스 풋 모델링
+- 회전자계 링과 회전자 속도 링을 이용한 슬립 시각화
+- 전력 흐름 입자, 열 glow, 위험 상태 glow, 비상정지 효과 추가
+- 고정자, 회전자, 축, 냉각팬, 회전자계 라벨 추가
+- WebGL/GPU 가속 기반 3D 렌더링으로 시각화 성능 개선
+- START 전 대기 상태에서 3D 회전자와 팬이 불필요하게 회전하지 않도록 수정
+- 팬과 회전자 회전속도가 실제 `Nr` 값에 연동되도록 수정
+- 2D 단면 시각화의 `Ns` / `Nr` 회전 표현 개선
+- 효율 분석 탭과 열 모델 탭 분리
+- 열모델이 허용 권선온도를 비현실적으로 초과하며 계속 상승하던 문제 개선
+- 명판 효율 기반 손실 한계를 반영하여 연속 운전 열 거동 현실성 개선
+- PDF 리포트 생성 기능 유지
+- Electron Windows EXE 배포 지원
