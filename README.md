@@ -8,13 +8,18 @@ React, Vite, Electron을 기반으로 개발하였으며, OpenAI ChatGPT와 Code
 
 > ⚠️ **실행 전 필독**
 >
-> 소스코드로 실행하려면 `node_modules` 폴더가 필요합니다. GitHub 저장소에는 용량 문제로 `node_modules`를 포함하지 않으므로, 소스코드 실행 시 반드시 [`npm install` 후 개발 서버 실행](#source-run)을 먼저 진행해야 합니다.
+> 별도 개발환경 없이 바로 실행하려면 [Windows 실행 파일 다운로드](#windows-download) 항목에서 `Setup` 또는 `Portable` 버전을 다운로드하면 됩니다.
 >
-> 별도 개발환경 없이 바로 실행하려면 [`Windows 실행 파일 다운로드`](#windows-download) 항목에서 `Setup` 또는 `Portable` 버전을 다운로드하여 실행하면 됩니다.
+> 실행 파일은 아래 Google Drive 폴더에서 다운로드할 수 있습니다.  
+> 👉 [MotorAnalyzer v0.5.16 실행 파일 다운로드 Google Drive](https://drive.google.com/drive/folders/1yzt-f9jhrkeS8aim-lhbI25Ehx1rGzDH?usp=sharing)
 >
-> `Portable` 버전은 설치 없이 바로 실행할 수 있지만, 더 안정적인 실행과 바로가기 생성, 앱 등록 등을 위해서는 [`Setup 버전 설치`](#setup-install)를 권장합니다.
+> `Portable` 버전은 설치 없이 바로 실행할 수 있지만, 오류 없이 더 안정적으로 사용하고 바로가기 생성, 앱 등록 등을 원한다면 [Setup 버전으로 설치하기 권장](#setup-install) 항목을 참고하여 `Setup` 버전으로 설치하는 것을 권장합니다.
 >
-> 바로 실행만 해보고 싶다면 [`Portable 버전 바로 실행`](#portable-run)을 참고하면 됩니다.
+> 설치 없이 빠르게 실행만 해보고 싶다면 [Portable 버전으로 바로 실행하기](#portable-run) 항목을 참고하면 됩니다.
+>
+> 소스코드로 직접 실행하려면 `node_modules` 폴더가 필요합니다. GitHub 저장소에는 용량 문제로 `node_modules`를 포함하지 않으므로, 소스코드 실행 시 반드시 [소스코드로 실행하기](#source-run) 항목을 참고하여 `npm install`을 먼저 실행해야 합니다.
+>
+> 전체 실행 방법을 한 번에 확인하려면 [6. 실행 방법](#execution-guide) 항목으로 이동하면 됩니다.
 
 ---
 
@@ -573,6 +578,7 @@ electron           Electron 실행 관련 파일
 
 ---
 
+<a id="execution-guide"></a>
 ## 6. 실행 방법
 
 MotorAnalyzer는 두 가지 방식으로 실행할 수 있습니다.
@@ -584,15 +590,14 @@ MotorAnalyzer는 두 가지 방식으로 실행할 수 있습니다.
 
 ---
 
+<a id="windows-download"></a>
 ### 6.1 Windows 실행 파일 다운로드
 
 Windows용 실행 파일은 용량이 커서 GitHub 소스코드 저장소에는 직접 포함하지 않았습니다.
 
 아래 Google Drive 폴더에서 실행 파일을 다운로드할 수 있습니다.
 
-```text
-https://drive.google.com/drive/folders/1yzt-f9jhrkeS8aim-lhbI25Ehx1rGzDH?usp=sharing
-```
+[MotorAnalyzer v0.5.16 실행 파일 다운로드 Google Drive](https://drive.google.com/drive/folders/1yzt-f9jhrkeS8aim-lhbI25Ehx1rGzDH?usp=sharing)
 
 다운로드 폴더에는 다음과 같은 파일이 포함될 수 있습니다.
 
@@ -603,6 +608,7 @@ MotorAnalyzer-0.5.16-Setup-x64.exe
 
 ---
 
+<a id="setup-install"></a>
 ### 6.2 Setup 버전으로 설치하기 권장
 
 정확하고 안정적인 실행을 위해서는 `Setup` 버전 설치를 권장합니다.
@@ -633,6 +639,7 @@ Windows 보안 경고가 표시될 경우, 개인 개발 앱이므로 다음 순
 
 ---
 
+<a id="portable-run"></a>
 ### 6.3 Portable 버전으로 바로 실행하기
 
 설치 없이 바로 실행하고 싶다면 Portable 버전을 사용할 수 있습니다.
@@ -654,6 +661,7 @@ Portable 버전은 별도 설치 과정 없이 파일을 더블클릭하여 실�
 
 ---
 
+<a id="source-run"></a>
 ### 6.4 소스코드로 실행하기
 
 GitHub 저장소의 소스코드를 직접 실행하려면 Node.js와 npm이 필요합니다.
@@ -1025,5 +1033,4 @@ Current Version: v0.5.16
 - 토크-속도 그래프 마커 개선
 - 권선온도 및 냉각 모델 추가
 - PDF 리포트 생성 기능 추가
-- Electron Windows EXE 배포 지원
-
+- Electron Windows EXE 배포 지원git
