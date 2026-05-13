@@ -8,11 +8,13 @@ React, Vite, Electron을 기반으로 개발하였으며, OpenAI ChatGPT와 Code
 
 > ⚠️ **실행 전 필독**
 >
-> 소스코드로 실행하려면 `node_modules` 폴더가 필요합니다. GitHub 저장소에는 용량 문제로 `node_modules`를 포함하지 않으므로, 소스코드 실행 시 반드시 `npm install`을 먼저 실행해야 합니다.
+> 소스코드로 실행하려면 `node_modules` 폴더가 필요합니다. GitHub 저장소에는 용량 문제로 `node_modules`를 포함하지 않으므로, 소스코드 실행 시 반드시 [`npm install` 후 개발 서버 실행](#source-run)을 먼저 진행해야 합니다.
 >
-> 별도 개발환경 없이 바로 실행하려면 아래의 **Windows 실행 파일 다운로드** 항목에서 `Setup` 또는 `Portable` 버전을 다운로드하여 실행하면 됩니다.
+> 별도 개발환경 없이 바로 실행하려면 [`Windows 실행 파일 다운로드`](#windows-download) 항목에서 `Setup` 또는 `Portable` 버전을 다운로드하여 실행하면 됩니다.
 >
-> `Portable` 버전은 설치 없이 바로 실행할 수 있지만, 더 안정적인 실행과 바로가기 생성, 앱 등록 등을 위해서는 `Setup` 버전으로 설치하는 것을 권장합니다.
+> `Portable` 버전은 설치 없이 바로 실행할 수 있지만, 더 안정적인 실행과 바로가기 생성, 앱 등록 등을 위해서는 [`Setup 버전 설치`](#setup-install)를 권장합니다.
+>
+> 바로 실행만 해보고 싶다면 [`Portable 버전 바로 실행`](#portable-run)을 참고하면 됩니다.
 
 ---
 
