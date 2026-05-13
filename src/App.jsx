@@ -121,6 +121,8 @@ const THERMAL_PARAM_KEYS = ['ambientTemperature', 'thermalResistance', 'thermalC
 const DASHBOARD_TABS = [
   { id: 'graphs', label: 'Graphs', subtitle: '그래프' },
   { id: 'parameters', label: 'Parameters', subtitle: '파라미터' },
+  { id: 'efficiency', label: 'Efficiency', subtitle: '효율 분석' },
+  { id: 'thermal', label: 'Thermal', subtitle: '열 모델' },
   { id: 'report', label: 'Report', subtitle: '리포트' },
   { id: 'theory', label: 'Theory', subtitle: '원리 설명' },
   { id: 'debug', label: 'Debug', subtitle: '디버그' },
@@ -130,7 +132,6 @@ const GRAPH_VIEWS = [
   { id: 'torque', label: 'Torque-Speed' },
   { id: 'startup', label: 'Startup Response' },
   { id: 'current', label: 'Three-Phase Current' },
-  { id: 'thermal', label: 'Thermal' },
   { id: 'all', label: 'Show All' },
 ]
 
@@ -705,6 +706,19 @@ function App() {
 
     return [...visibleBaseWarnings, ...thermalWarnings]
   }, [displayedMotor, thermalModel])
+  const warningSeverity = useMemo(() => {
+    if (warningCards.some((warning) => warning.tone === 'danger')) return 'danger'
+    if (warningCards.some((warning) => warning.tone === 'caution')) return 'caution'
+    if (warningCards.some((warning) => warning.tone === 'starting')) return 'starting'
+    if (warningCards.every((warning) => warning.tone === 'off')) return 'off'
+
+    return 'normal'
+  }, [warningCards])
+  const lowPerformanceMode = useMemo(
+    () => typeof window !== 'undefined' &&
+      Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches),
+    [],
+  )
 
   useEffect(() => {
     if (!setupCompleted) return undefined
@@ -717,12 +731,13 @@ function App() {
 
       setWindingTemperature((currentTemperature) => stepThermalModel({
         ambientTemperature: params.ambientTemperature,
+        coolingMode: params.coolingMode,
         currentTemperature,
         dtSeconds,
-        lossPowerW:
-          displayedMotor.isMotorEnergized && !displayedMotor.voltageCondition?.isProhibited
-            ? lossAnalysis.totalLossW
-            : 0,
+        efficiencyReference: params.efficiencyReference,
+        lossPowerW: thermalModel.totalLossW,
+        maxWindingTemperature: params.maxWindingTemperature,
+        ratedPowerKwReference: params.ratedPowerKwReference,
         ratedSpeedRpm: params.ratedSpeedReference,
         rotorSpeedRpm: displayedMotor.nr,
         thermalCapacitance: params.thermalCapacitance,
@@ -735,12 +750,16 @@ function App() {
     displayedMotor.isMotorEnergized,
     displayedMotor.nr,
     displayedMotor.voltageCondition?.isProhibited,
-    lossAnalysis.totalLossW,
     params.ambientTemperature,
+    params.coolingMode,
+    params.efficiencyReference,
+    params.maxWindingTemperature,
+    params.ratedPowerKwReference,
     params.ratedSpeedReference,
     params.thermalCapacitance,
     params.thermalResistance,
     setupCompleted,
+    thermalModel.totalLossW,
   ])
 
   useEffect(() => {
@@ -1675,8 +1694,26 @@ function App() {
         </section>
 
         <section className="always-visible-grid">
+          <Motor3DPanel
+            isCoasting={isCoastingDown}
+            isEmergencyStop={displayedMotor.simulationState === 'emergency-stop'}
+            isFieldOn={
+              displayedMotor.isMotorEnergized &&
+              !displayedMotor.voltageCondition?.isProhibited &&
+              displayedMotor.simulationState !== 'emergency-stop' &&
+              !isCoastingDown
+            }
+            isRunning={displayedMotor.simulationState === 'running'}
+            isStarting={displayedMotor.simulationState === 'starting'}
+            lowPerformanceMode={lowPerformanceMode}
+            motor={displayedMotor}
+            params={params}
+            simulationState={displayedMotor.simulationState}
+            thermalStatus={thermalModel.thermalStatus}
+            warningSeverity={warningSeverity}
+            windingTemperature={thermalModel.windingTemperature}
+          />
           <MotorVisualization motor={displayedMotor} />
-          <Motor3DPanel motor={displayedMotor} />
           <WarningPanel warnings={warningCards} />
         </section>
         </div>
@@ -1726,17 +1763,12 @@ function App() {
                 {(activeGraphView === 'current' || activeGraphView === 'all') ? (
                   <ThreePhaseCurrentPanel motor={displayedMotor} />
                 ) : null}
-                {(activeGraphView === 'thermal' || activeGraphView === 'all') ? (
-                  <ThermalChart thermal={thermalModel} />
-                ) : null}
               </div>
             ) : null}
 
             {activeDashboardTab === 'parameters' ? (
               <div className="parameters-tab">
                 <TechnicalParameterPanel motor={motor} testProfile={testProfile} />
-                <LossEfficiencyPanel motor={motor} displayedMotor={displayedMotor} />
-                <ThermalModelPanel thermal={thermalModel} />
                 <EquivalentParameterDashboardPanel motor={motor} />
                 <MappingCheckPanel
                   motor={motor}
@@ -1745,6 +1777,19 @@ function App() {
                   startupState={startupState}
                   testProfile={testProfile}
                 />
+              </div>
+            ) : null}
+
+            {activeDashboardTab === 'efficiency' ? (
+              <div className="efficiency-tab">
+                <LossEfficiencyPanel motor={motor} displayedMotor={displayedMotor} />
+              </div>
+            ) : null}
+
+            {activeDashboardTab === 'thermal' ? (
+              <div className="thermal-tab">
+                <ThermalModelPanel thermal={thermalModel} />
+                <ThermalChart thermal={thermalModel} />
               </div>
             ) : null}
 

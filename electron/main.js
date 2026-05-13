@@ -8,11 +8,7 @@ const shouldAutoExit = process.env.ELECTRON_AUTO_EXIT === '1'
 
 let mainWindow
 
-app.disableHardwareAcceleration()
-
 if (shouldAutoExit) {
-  app.commandLine.appendSwitch('disable-gpu')
-  app.commandLine.appendSwitch('disable-software-rasterizer')
   app.commandLine.appendSwitch('no-sandbox')
   app.setPath('userData', path.join(app.getPath('temp'), 'MotorAnalyzerElectronTest'))
 }

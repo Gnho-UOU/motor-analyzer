@@ -2016,6 +2016,226 @@ textarea {
   animation: motor-panel-alarm 0.68s ease-in-out infinite;
 }
 
+.motor-three-scene {
+  position: relative;
+  min-height: 430px;
+  height: clamp(430px, 46vw, 560px);
+  overflow: hidden;
+  border: 1px solid rgba(132, 169, 193, 0.16);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 48% 34%, rgba(0, 229, 255, 0.14), transparent 34%),
+    linear-gradient(135deg, rgba(5, 13, 22, 0.98), rgba(10, 22, 34, 0.96));
+  box-shadow: inset 0 0 38px rgba(0, 229, 255, 0.08);
+}
+
+.motor-three-scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.motor-three-fallback {
+  display: grid;
+  min-height: 360px;
+  place-items: center;
+  gap: 8px;
+  padding: 24px;
+  border: 1px solid rgba(132, 169, 193, 0.18);
+  border-radius: 8px;
+  background: rgba(5, 13, 22, 0.78);
+  color: var(--muted);
+  text-align: center;
+}
+
+.motor-three-fallback strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.motor-three-phase-label,
+.motor-three-readout,
+.motor-three-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(185, 214, 230, 0.22);
+  border-radius: 999px;
+  background: rgba(4, 12, 20, 0.72);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  color: #f5fbff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.motor-three-phase-label {
+  width: 24px;
+  height: 24px;
+  color: var(--cyan);
+}
+
+.motor-three-readout {
+  min-width: 260px;
+  padding: 9px 13px;
+  color: #cfeaf6;
+}
+
+.motor-three-badge {
+  padding: 10px 15px;
+  border-color: rgba(255, 77, 109, 0.62);
+  background: rgba(74, 6, 15, 0.82);
+  color: #ffe6ec;
+  text-shadow: 0 0 10px rgba(255, 77, 109, 0.68);
+}
+
+.motor-three-badge-emergency {
+  animation: alarm-chip-flash 0.72s ease-in-out infinite;
+}
+
+.motor-three-hud,
+.motor-three-renderer {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid rgba(185, 214, 230, 0.18);
+  border-radius: 8px;
+  background: rgba(4, 12, 20, 0.68);
+  color: #cfeaf6;
+  font-size: 11px;
+  letter-spacing: 0;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+}
+
+.motor-three-hud {
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+}
+
+.motor-three-hud span {
+  white-space: nowrap;
+}
+
+.motor-three-hud strong {
+  color: #f4fbff;
+}
+
+.motor-three-part-label {
+  pointer-events: none;
+}
+
+.motor-three-part-label span {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  min-width: 46px;
+  padding: 3px 5px;
+  border: 1px solid color-mix(in srgb, var(--label-color) 48%, transparent);
+  border-radius: 5px;
+  background: rgba(4, 12, 20, 0.58);
+  box-shadow:
+    0 5px 12px rgba(0, 0, 0, 0.2),
+    inset 0 0 10px color-mix(in srgb, var(--label-color) 8%, transparent);
+  color: #f5fbff;
+  text-align: left;
+  opacity: 0.86;
+  backdrop-filter: blur(8px);
+}
+
+.motor-three-part-label span::before {
+  position: absolute;
+  top: 6px;
+  left: -4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  content: "";
+  background: var(--label-color);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--label-color) 64%, transparent);
+}
+
+.motor-three-part-label strong,
+.motor-three-part-label small {
+  display: block;
+  white-space: nowrap;
+}
+
+.motor-three-part-label strong {
+  color: var(--label-color);
+  font-size: 8px;
+  font-weight: 860;
+}
+
+.motor-three-part-label small {
+  color: #9fb6c3;
+  font-family: var(--mono);
+  font-size: 5.5px;
+  font-weight: 760;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.motor-three-state {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--cyan);
+  font-weight: 800;
+}
+
+.motor-three-state-caution {
+  background: rgba(255, 176, 32, 0.14);
+  color: #ffcf68;
+}
+
+.motor-three-state-danger,
+.motor-three-state-emergency {
+  background: rgba(255, 77, 109, 0.16);
+  color: #ff9aad;
+}
+
+.motor-three-state-off {
+  background: rgba(141, 160, 172, 0.12);
+  color: #a7b8c2;
+}
+
+.motor-three-renderer {
+  top: 14px;
+  right: 14px;
+  max-width: min(360px, calc(100% - 28px));
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  padding: 8px 10px;
+}
+
+.motor-three-renderer span {
+  color: #f4fbff;
+  font-weight: 800;
+}
+
+.motor-three-renderer small {
+  overflow: hidden;
+  max-width: 100%;
+  color: #8ea7b7;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.motor-three-renderer.is-software {
+  border-color: rgba(255, 77, 109, 0.42);
+  background: rgba(76, 8, 18, 0.72);
+}
+
 .svg-korean {
   fill: #f1faff;
   font-size: 12px;
@@ -3511,6 +3731,8 @@ textarea {
 .dashboard-tab-panel,
 .graphs-tab,
 .parameters-tab,
+.efficiency-tab,
+.thermal-tab,
 .report-tab,
 .debug-tab {
   display: grid;
@@ -4122,6 +4344,7 @@ textarea {
   .state-chip-accelerating,
   .motor-tone-danger,
   .motor-state-emergency-stop,
+  .motor-three-badge-emergency,
   .motor-state-starting .field-orbit,
   .motor-state-starting .rotor-orbit,
   .motor-state-starting .motor3d-rotor-orbit-3d {

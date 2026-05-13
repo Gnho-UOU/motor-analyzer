@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { clamp, formatCompact } from '../../utils/numberUtils.js'
+
+const CROSS_SECTION_VISUAL_RPM_SCALE = 0.04
 
 function polarPoint(angle, radius) {
   const radians = (angle * Math.PI) / 180
@@ -13,8 +15,8 @@ export function MotorVisualization({ motor }) {
   const [angles, setAngles] = useState({ field: 0, rotor: 0 })
   const isMotorEnergized = motor.isMotorEnergized
   const isRotorMoving = motor.isRotorMoving
-  const rotorRatio = clamp(motor.nr / Math.max(motor.ns, 0.0001), 0, 1)
-  const rotorRatioRef = useRef(rotorRatio)
+  const fieldDegreesPerMs = Math.max(0, motor.ns) * 360 / 60000 * CROSS_SECTION_VISUAL_RPM_SCALE
+  const rotorDegreesPerMs = Math.max(0, motor.nr) * 360 / 60000 * CROSS_SECTION_VISUAL_RPM_SCALE
   const fieldAngle = isMotorEnergized ? angles.field : 0
   const rotorAngle = isRotorMoving ? angles.rotor : 0
   const electricalAngle = (fieldAngle * Math.PI) / 180
@@ -23,15 +25,10 @@ export function MotorVisualization({ motor }) {
   const magneticArrowEndX = rotorArrowEndX
 
   useEffect(() => {
-    rotorRatioRef.current = rotorRatio
-  }, [rotorRatio])
-
-  useEffect(() => {
     if (!isMotorEnergized && !isRotorMoving) return undefined
 
     let frameId
     let lastTime
-    const degreesPerMs = 360 / (motor.visualFieldDuration * 1000)
 
     const tick = (time) => {
       if (lastTime === undefined) {
@@ -41,8 +38,8 @@ export function MotorVisualization({ motor }) {
       const delta = Math.min(time - lastTime, 64)
       lastTime = time
       setAngles((current) => ({
-        field: isMotorEnergized ? current.field + delta * degreesPerMs : 0,
-        rotor: current.rotor + delta * degreesPerMs * rotorRatioRef.current,
+        field: isMotorEnergized ? current.field + delta * fieldDegreesPerMs : 0,
+        rotor: isRotorMoving ? current.rotor + delta * rotorDegreesPerMs : current.rotor,
       }))
       frameId = requestAnimationFrame(tick)
     }
@@ -50,7 +47,7 @@ export function MotorVisualization({ motor }) {
     frameId = requestAnimationFrame(tick)
 
     return () => cancelAnimationFrame(frameId)
-  }, [isMotorEnergized, isRotorMoving, motor.visualFieldDuration])
+  }, [fieldDegreesPerMs, isMotorEnergized, isRotorMoving, rotorDegreesPerMs])
 
   const phases = [
     {

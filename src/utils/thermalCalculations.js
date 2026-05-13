@@ -33,6 +33,66 @@ export function estimateThermalDefaults(ratedPowerKw) {
   }
 }
 
+function estimateRatedLossPowerW(params = {}) {
+  const ratedPowerW = Math.max(1, toFiniteNumber(params.ratedPowerKwReference, 15) * 1000)
+  const efficiency = clamp(toFiniteNumber(params.efficiencyReference, 90) / 100, 0.5, 0.98)
+  const ratedLossRatio = clamp((1 / efficiency) - 1, 0.025, 0.18)
+
+  return ratedPowerW * ratedLossRatio
+}
+
+function calculateRatedThermalCalibration(params = {}) {
+  const ambient = toFiniteNumber(params.ambientTemperature, 25)
+  const maxWindingTemperature = Math.max(ambient + 10, toFiniteNumber(params.maxWindingTemperature, 120))
+  const allowableRise = Math.max(10, maxWindingTemperature - ambient)
+  const targetRatedTemperatureRise = Math.min(
+    clamp(allowableRise * 0.58, 20, 75),
+    allowableRise * 0.72,
+  )
+  const ratedLossPowerW = estimateRatedLossPowerW(params)
+  const ratedEffectiveThermalResistance = targetRatedTemperatureRise / Math.max(ratedLossPowerW, 1)
+
+  return {
+    ratedEffectiveThermalResistance,
+    ratedLossPowerW,
+    targetRatedTemperatureRise,
+  }
+}
+
+function calculateThermalLossPower({ displayedMotor, lossAnalysis, params, thermalCalibration }) {
+  const isHeating = Boolean(displayedMotor?.isMotorEnergized) && !displayedMotor?.voltageCondition?.isProhibited
+  if (!isHeating) {
+    return {
+      isLimited: false,
+      referenceLossPowerW: 0,
+      rawLossPowerW: 0,
+      thermalLossPowerW: 0,
+    }
+  }
+
+  const rawLossPowerW = Math.max(0, toFiniteNumber(lossAnalysis?.totalLossW, 0))
+  const ratedPowerW = Math.max(1, toFiniteNumber(params?.ratedPowerKwReference, 15) * 1000)
+  const outputPowerW = Math.max(0, toFiniteNumber(lossAnalysis?.outputPowerW, 0))
+  const ratedLossPowerW = Math.max(1, thermalCalibration.ratedLossPowerW)
+  const loadRatio = clamp(outputPowerW / ratedPowerW, 0, 2.5)
+  const fixedLossShare = 0.38
+  const referenceLossPowerW = ratedLossPowerW *
+    (fixedLossShare + (1 - fixedLossShare) * (loadRatio ** 2))
+  const vpu = toFiniteNumber(displayedMotor?.vpu, 1)
+  const voltageStress = clamp(1 + Math.max(0, Math.abs(vpu - 1) - 0.05) * 2.4, 1, 1.8)
+  const isStarting = displayedMotor?.simulationState === 'starting'
+  const lossLimitMultiplier = isStarting ? 6 : 1.3
+  const thermalLossLimitW = Math.max(ratedLossPowerW * 0.25, referenceLossPowerW * voltageStress * lossLimitMultiplier)
+  const thermalLossPowerW = Math.min(rawLossPowerW, thermalLossLimitW)
+
+  return {
+    isLimited: thermalLossPowerW + 0.001 < rawLossPowerW,
+    referenceLossPowerW,
+    rawLossPowerW,
+    thermalLossPowerW,
+  }
+}
+
 export function sanitizeThermalParams(params = {}) {
   const defaults = estimateThermalDefaults(params.ratedPowerKwReference)
   const coolingMode = THERMAL_COOLING_MODES[params.coolingMode]
@@ -68,6 +128,7 @@ export function calculateCoolingState({
   ambientTemperature,
   coolingMode = 'self-ventilated',
   currentTemperature,
+  ratedEffectiveThermalResistance,
   ratedSpeedRpm,
   rotorSpeedRpm,
   thermalResistance,
@@ -84,10 +145,21 @@ export function calculateCoolingState({
     0.1,
     3,
   )
-  const effectiveThermalResistance = Math.max(0.001, rth / fanCoolingFactor)
+  const ratedFanCoolingFactor = clamp(
+    mode.naturalCooling + mode.forcedCooling,
+    0.1,
+    3,
+  )
+  const calibratedBaseThermalResistance = toFiniteNumber(ratedEffectiveThermalResistance, 0) > 0
+    ? toFiniteNumber(ratedEffectiveThermalResistance, 0) * ratedFanCoolingFactor
+    : Number.POSITIVE_INFINITY
+  const baseThermalResistance = Math.min(rth, calibratedBaseThermalResistance)
+  const effectiveThermalResistance = Math.max(0.0001, baseThermalResistance / fanCoolingFactor)
   const coolingPowerW = Math.max(0, (current - ambient) / effectiveThermalResistance)
 
   return {
+    baseThermalResistance,
+    calibratedBaseThermalResistance,
     coolingMode,
     coolingModeLabel: mode.label,
     coolingPowerW,
@@ -102,9 +174,12 @@ export function stepThermalModel({
   coolingMode,
   currentTemperature,
   dtSeconds,
+  efficiencyReference,
   lossPowerW,
   ratedSpeedRpm,
+  ratedPowerKwReference,
   rotorSpeedRpm,
+  maxWindingTemperature,
   thermalCapacitance,
   thermalResistance,
 }) {
@@ -113,10 +188,17 @@ export function stepThermalModel({
   const dt = clamp(toFiniteNumber(dtSeconds, 1), 0, 60)
   const loss = Math.max(0, toFiniteNumber(lossPowerW, 0))
   const cth = Math.max(1000, toFiniteNumber(thermalCapacitance, 25000))
+  const thermalCalibration = calculateRatedThermalCalibration({
+    ambientTemperature: ambient,
+    efficiencyReference,
+    maxWindingTemperature,
+    ratedPowerKwReference,
+  })
   const cooling = calculateCoolingState({
     ambientTemperature: ambient,
     coolingMode,
     currentTemperature: current,
+    ratedEffectiveThermalResistance: thermalCalibration.ratedEffectiveThermalResistance,
     ratedSpeedRpm,
     rotorSpeedRpm,
     thermalResistance,
@@ -174,8 +256,10 @@ export function buildThermalProjection({
   ambientTemperature,
   coolingMode,
   currentTemperature,
+  efficiencyReference,
   lossPowerW,
   maxWindingTemperature,
+  ratedPowerKwReference,
   ratedSpeedRpm,
   rotorSpeedRpm,
   thermalCapacitance,
@@ -187,12 +271,19 @@ export function buildThermalProjection({
     toFiniteNumber(currentTemperature, toFiniteNumber(ambientTemperature, 25)),
   )
   const dt = 60
+  const thermalCalibration = calculateRatedThermalCalibration({
+    ambientTemperature,
+    efficiencyReference,
+    maxWindingTemperature,
+    ratedPowerKwReference,
+  })
 
   for (let time = 0; time <= 3600; time += dt) {
     const cooling = calculateCoolingState({
       ambientTemperature,
       coolingMode,
       currentTemperature: temperature,
+      ratedEffectiveThermalResistance: thermalCalibration.ratedEffectiveThermalResistance,
       ratedSpeedRpm,
       rotorSpeedRpm,
       thermalResistance,
@@ -212,7 +303,10 @@ export function buildThermalProjection({
       coolingMode,
       currentTemperature: temperature,
       dtSeconds: dt,
+      efficiencyReference,
       lossPowerW,
+      maxWindingTemperature,
+      ratedPowerKwReference,
       ratedSpeedRpm,
       rotorSpeedRpm,
       thermalCapacitance,
@@ -225,8 +319,19 @@ export function buildThermalProjection({
 
 export function buildThermalAnalysis({ displayedMotor, lossAnalysis, params, windingTemperature }) {
   const thermalParams = sanitizeThermalParams(params)
-  const isHeating = Boolean(displayedMotor?.isMotorEnergized) && !displayedMotor?.voltageCondition?.isProhibited
-  const totalLossW = isHeating ? Math.max(0, toFiniteNumber(lossAnalysis?.totalLossW, 0)) : 0
+  const thermalCalibration = calculateRatedThermalCalibration({
+    ...thermalParams,
+    efficiencyReference: params?.efficiencyReference,
+    ratedPowerKwReference: params?.ratedPowerKwReference,
+  })
+  const thermalLoss = calculateThermalLossPower({
+    displayedMotor,
+    lossAnalysis,
+    params,
+    thermalCalibration,
+  })
+  const isHeating = thermalLoss.thermalLossPowerW > 0
+  const totalLossW = thermalLoss.thermalLossPowerW
   const rotorSpeedRpm = Math.max(0, toFiniteNumber(displayedMotor?.nr, 0))
   const ratedSpeedRpm = Math.max(
     1,
@@ -239,6 +344,7 @@ export function buildThermalAnalysis({ displayedMotor, lossAnalysis, params, win
   const cooling = calculateCoolingState({
     ...thermalParams,
     currentTemperature: temperature,
+    ratedEffectiveThermalResistance: thermalCalibration.ratedEffectiveThermalResistance,
     ratedSpeedRpm,
     rotorSpeedRpm,
   })
@@ -249,18 +355,31 @@ export function buildThermalAnalysis({ displayedMotor, lossAnalysis, params, win
   const graphData = buildThermalProjection({
     ...thermalParams,
     currentTemperature: temperature,
+    efficiencyReference: params?.efficiencyReference,
     lossPowerW: totalLossW,
+    ratedPowerKwReference: params?.ratedPowerKwReference,
     ratedSpeedRpm,
     rotorSpeedRpm,
   })
 
   return {
     ...thermalParams,
+    calibratedBaseThermalResistance: cooling.calibratedBaseThermalResistance,
     coolingModeLabel: cooling.coolingModeLabel,
     coolingPowerW: cooling.coolingPowerW,
     coolingPowerKw: cooling.coolingPowerW / 1000,
     effectiveThermalResistance: cooling.effectiveThermalResistance,
     fanCoolingFactor: cooling.fanCoolingFactor,
+    isThermalResistanceLimited: cooling.baseThermalResistance < thermalParams.thermalResistance,
+    ratedEffectiveThermalResistance: thermalCalibration.ratedEffectiveThermalResistance,
+    rawLossPowerW: thermalLoss.rawLossPowerW,
+    rawLossPowerKw: thermalLoss.rawLossPowerW / 1000,
+    referenceLossPowerW: thermalLoss.referenceLossPowerW,
+    referenceLossPowerKw: thermalLoss.referenceLossPowerW / 1000,
+    ratedLossPowerW: thermalCalibration.ratedLossPowerW,
+    ratedLossPowerKw: thermalCalibration.ratedLossPowerW / 1000,
+    targetRatedTemperatureRise: thermalCalibration.targetRatedTemperatureRise,
+    isThermalLossLimited: thermalLoss.isLimited,
     windingTemperature: temperature,
     ratedSpeedRpm,
     rotorSpeedRpm,
